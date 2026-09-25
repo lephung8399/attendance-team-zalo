@@ -39,20 +39,23 @@ docker compose up --build
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env        # xem toàn bộ biến môi trường có thể chỉnh ở đây
 alembic upgrade head        # hoặc bỏ qua — SQLite dev tự tạo bảng khi khởi động
 uvicorn app.main:app --reload
 ```
 
-Mặc định dùng SQLite (`sqlite:///./attendance.db`) — không cần cài Postgres để phát triển. Set `APP_DATABASE_URL` để trỏ sang Postgres.
+[`backend/.env.example`](backend/.env.example) liệt kê đầy đủ mọi biến môi trường app đọc được (skill score, rule chia đội, balancing engine, Zalo...) kèm giá trị mặc định — không sửa `.env` cũng chạy được vì mọi thứ đều có default trong `app/config.py`.
 
-**Cắm Zalo thật (tuỳ chọn):** đăng ký bot tại [bot.zaloplatforms.com](https://bot.zaloplatforms.com), mời bot vào group, rồi set 2 biến môi trường (không có tiền tố `APP_`):
+Mặc định dùng SQLite (`sqlite:///./attendance.db`) — không cần cài Postgres để phát triển. Set `APP_DATABASE_URL` trong `.env` để trỏ sang Postgres.
+
+**Cắm Zalo thật (tuỳ chọn):** đăng ký bot tại [bot.zaloplatforms.com](https://bot.zaloplatforms.com), mời bot vào group, rồi điền vào `.env`:
 
 ```bash
-export ZALO_BOT_TOKEN="<token bot>"
-export ZALO_GROUP_CHAT_ID="<chat_id của group, dạng zgr-...>"
+ZALO_BOT_TOKEN=<token bot>
+ZALO_GROUP_CHAT_ID=<chat_id của group, dạng zgr-...>
 ```
 
-Không set thì hệ thống tự dùng `NullMessagePublisher`/`ManualAttendanceProvider` — Copy Message và đồng bộ thủ công luôn hoạt động. Có thể đổi từ khoá check-in mặc định ("tham gia") qua `ZALO_CHECKIN_KEYWORD`.
+Hai biến này **không có tiền tố `APP_`** — vì là credential bên thứ ba, tách khỏi các biến tuning còn lại (xem comment trong `config.py`). Không set thì hệ thống tự dùng `NullMessagePublisher`/`ManualAttendanceProvider` — Copy Message và đồng bộ thủ công luôn hoạt động. Có thể đổi từ khoá check-in mặc định ("tham gia") qua `ZALO_CHECKIN_KEYWORD`.
 
 Chạy test:
 
