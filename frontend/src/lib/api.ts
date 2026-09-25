@@ -78,6 +78,8 @@ export const listParticipants = (sessionId: string) =>
   get<Participant[]>(`/api/sessions/${sessionId}/participants`);
 export const syncAttendance = (sessionId: string, memberIds: string[]) =>
   post<Participant[]>(`/api/sessions/${sessionId}/sync-attendance`, { member_ids: memberIds });
+export const syncAttendanceFromZalo = (sessionId: string) =>
+  post<Participant[]>(`/api/sessions/${sessionId}/sync-attendance/zalo`);
 export const addParticipant = (sessionId: string, memberId: string) =>
   post<Participant>(`/api/sessions/${sessionId}/participants`, { member_id: memberId });
 export const addGuest = (

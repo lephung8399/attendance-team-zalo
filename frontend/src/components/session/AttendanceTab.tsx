@@ -8,6 +8,7 @@ import {
   listParticipants,
   removeParticipant,
   syncAttendance,
+  syncAttendanceFromZalo,
   updateParticipant,
 } from "@/lib/api";
 import { ApiError } from "@/lib/api";
@@ -31,6 +32,8 @@ export function AttendanceTab({ sessionId, session }: { sessionId: string; sessi
     queryClient.invalidateQueries({ queryKey: ["sessions"] });
   };
 
+  const [error, setError] = useState<string | null>(null);
+
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const syncMutation = useMutation({
     mutationFn: () => syncAttendance(sessionId, selectedMemberIds),
@@ -40,9 +43,17 @@ export function AttendanceTab({ sessionId, session }: { sessionId: string; sessi
     },
   });
 
+  const zaloSyncMutation = useMutation({
+    mutationFn: () => syncAttendanceFromZalo(sessionId),
+    onSuccess: (added) => {
+      invalidate();
+      setError(added.length === 0 ? "Không có ai check-in mới trong nhóm Zalo kể từ lần đồng bộ trước." : null);
+    },
+    onError: (e) => setError(e instanceof ApiError ? e.message : "Có lỗi xảy ra"),
+  });
+
   const [guestName, setGuestName] = useState("");
   const [guestSkill, setGuestSkill] = useState<SkillLevel>("UNKNOWN");
-  const [error, setError] = useState<string | null>(null);
   const addGuestMutation = useMutation({
     mutationFn: () => addGuest(sessionId, { name: guestName || undefined, skill_level: guestSkill }),
     onSuccess: () => {
@@ -86,6 +97,23 @@ export function AttendanceTab({ sessionId, session }: { sessionId: string; sessi
         >
           {error} <span className="text-xs opacity-70">(bấm để đóng)</span>
         </button>
+      )}
+
+      {editable && (
+        <Card className="p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-medium">Đồng bộ check-in từ Zalo</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Lấy những ai đã gõ từ khoá check-in (vd &quot;tham gia&quot;) trong group Zalo kể từ lần đồng bộ
+                trước. Cần cấu hình <code>ZALO_BOT_TOKEN</code> / <code>ZALO_GROUP_CHAT_ID</code>.
+              </p>
+            </div>
+            <Button variant="secondary" disabled={zaloSyncMutation.isPending} onClick={() => zaloSyncMutation.mutate()}>
+              Đồng bộ từ Zalo
+            </Button>
+          </div>
+        </Card>
       )}
 
       {editable && (
