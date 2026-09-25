@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.common.exceptions import ValidationFailedError
 from app.database import get_db
 from app.modules.attendance import service
 from app.modules.attendance.providers import ManualAttendanceProvider, ProviderParticipant
@@ -11,6 +12,7 @@ from app.modules.attendance.schemas import (
     SyncAttendanceRequest,
     UpdateParticipantRequest,
 )
+from app.modules.integrations.zalo.factory import build_zalo_checkin_provider
 from app.modules.members.models import Member
 
 router = APIRouter(prefix="/api/sessions/{session_id}", tags=["attendance"])
@@ -24,6 +26,19 @@ def sync_attendance(session_id: str, payload: SyncAttendanceRequest, db: Session
         for m in members
     ]
     provider = ManualAttendanceProvider(provider_participants)
+    return service.sync_attendance(db, session_id, provider)
+
+
+@router.post("/sync-attendance/zalo", response_model=list[ParticipantOut])
+def sync_attendance_from_zalo(session_id: str, db: Session = Depends(get_db)):
+    """Source B (business-requirements.md #8): pull anyone who has typed the
+    check-in keyword in the Zalo group since the last sync. 400s with a clear
+    message if ZALO_BOT_TOKEN/ZALO_GROUP_CHAT_ID aren't configured yet."""
+    provider = build_zalo_checkin_provider(db)
+    if provider is None:
+        raise ValidationFailedError(
+            "Chưa cấu hình Zalo (ZALO_BOT_TOKEN / ZALO_GROUP_CHAT_ID). Dùng đồng bộ thủ công bên dưới."
+        )
     return service.sync_attendance(db, session_id, provider)
 
 

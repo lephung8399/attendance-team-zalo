@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +34,19 @@ class Settings(BaseSettings):
     balancing_tie_tolerance: float = 0.01
 
     default_team_colors: list[str] = ["WHITE", "RED", "BLUE", "YELLOW", "BLACK", "GREEN"]
+
+    # Zalo Bot Platform (https://bot.zaloplatforms.com) — Phase 2 integration.
+    # Deliberately read WITHOUT the APP_ prefix (plain env var names) so they
+    # can be set once in the environment's secret store independent of the
+    # app's other config. Both must be set for real Zalo to activate; leaving
+    # either unset keeps the app on NullMessagePublisher / manual attendance,
+    # per the "Zalo is not core" principle (business-requirements.md #72).
+    zalo_bot_token: str | None = Field(default=None, validation_alias="ZALO_BOT_TOKEN")
+    zalo_group_chat_id: str | None = Field(default=None, validation_alias="ZALO_GROUP_CHAT_ID")
+    zalo_bot_api_base_url: str = Field(
+        default="https://bot-api.zapps.me", validation_alias="ZALO_BOT_API_BASE_URL"
+    )
+    zalo_checkin_keyword: str = Field(default="tham gia", validation_alias="ZALO_CHECKIN_KEYWORD")
 
 
 @lru_cache

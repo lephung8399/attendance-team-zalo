@@ -3,6 +3,7 @@
 
 from app.modules.attendance import models as attendance_models  # noqa: F401
 from app.modules.audit import models as audit_models  # noqa: F401
+from app.modules.integrations.zalo import models as zalo_models  # noqa: F401
 from app.modules.matches import models as matches_models  # noqa: F401
 from app.modules.members import models as members_models  # noqa: F401
 from app.modules.publishing import models as publishing_models  # noqa: F401

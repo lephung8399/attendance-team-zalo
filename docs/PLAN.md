@@ -42,9 +42,19 @@ Tính năng lớn, ảnh hưởng trực tiếp luồng sản phẩm — ưu ti�
 10. **Audit trail tối thiểu** — ghi lại generate/move/swap/finalize/publish để phục vụ BR-05 và dữ liệu tương lai.
 
 ### Phase 2 — Zalo Integration thật + Automation
-- PoC riêng theo mục 68 của spec (không block Phase 1).
-- `ZaloAttendanceProvider`, webhook nhận đăng ký, `ZaloMessagePublisher` thật.
-- Redis + worker (Dramatiq) cho publish/sync bất đồng bộ + retry.
+
+**Cập nhật (PoC đã chạy — không dùng Zalo OA/GMF như dự tính ban đầu):**
+
+Đã xác nhận qua source code SDK chính thức (`python-zalo-bot`) rằng nền tảng thực tế dùng là **Zalo Bot Platform** (`bot.zaloplatforms.com`), một HTTP API kiểu Telegram Bot API (`POST {base}/bot{token}/{method}`), **không có endpoint đọc poll/vote nào cả** — xác nhận đúng nghi ngờ ở mục 68: Source A (đọc poll) không khả thi. Đã triển khai:
+
+- `integrations/zalo/client.py` — `ZaloBotClient` gọi `getMe`/`sendMessage`/`getUpdates` thật.
+- `integrations/zalo/publisher.py` — `ZaloMessagePublisher` thật, tự động được dùng khi có `ZALO_BOT_TOKEN` + `ZALO_GROUP_CHAT_ID`, nếu không có thì fallback `NullMessagePublisher` (Copy Message) — đúng nguyên tắc "Zalo không phải core".
+- `integrations/zalo/attendance_provider.py` — `ZaloCheckinAttendanceProvider` (**Source B**): member gõ từ khoá (mặc định "tham gia") trong group, bot nhặt qua `getUpdates` polling (không cần webhook/domain public), tự tạo Member mới nếu chưa có (map theo `zalo_user_id`) — thoả FR-02. Idempotent qua bảng `zalo_poll_state` lưu `last_update_id`.
+- Endpoint `POST /api/sessions/{id}/sync-attendance/zalo` — Admin bấm "Đồng bộ từ Zalo" trên UI.
+
+**Còn lại cho Phase 2 đầy đủ:**
+- Webhook (thay vì polling thủ công qua nút bấm) để tự động nhận check-in real-time — cần domain HTTPS public.
+- Redis + worker (Dramatiq) cho publish/sync bất đồng bộ + retry, polling định kỳ nếu chưa dùng webhook.
 
 ### Phase 3 — Smart Engine
 - OR-Tools solver thay thế/bổ sung greedy engine, thêm constraint vị trí/GK, reserve rotation công bằng theo lịch sử.

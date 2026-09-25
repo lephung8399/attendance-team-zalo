@@ -20,6 +20,12 @@ services:
     environment:
       APP_DATABASE_URL: postgresql+psycopg2://attendance:attendance@postgres:5432/attendance
       APP_CORS_ORIGINS: '["http://localhost:3000"]'
+      # Optional real Zalo integration — pass through from the host shell
+      # (`export ZALO_BOT_TOKEN=...` before `docker compose up`). Left unset,
+      # the backend falls back to NullMessagePublisher / manual attendance.
+      ZALO_BOT_TOKEN: ${ZALO_BOT_TOKEN:-}
+      ZALO_GROUP_CHAT_ID: ${ZALO_GROUP_CHAT_ID:-}
+      ZALO_CHECKIN_KEYWORD: ${ZALO_CHECKIN_KEYWORD:-tham gia}
     depends_on:
       postgres:
         condition: service_healthy

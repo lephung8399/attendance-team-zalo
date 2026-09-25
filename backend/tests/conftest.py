@@ -13,6 +13,22 @@ from app.database import Base, get_db
 
 
 @pytest.fixture()
+def db_session():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+    db = testing_session_local()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@pytest.fixture()
 def client():
     import app.main as main_module
 
