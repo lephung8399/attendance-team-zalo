@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf9f6;
+  --surface: #ffffff;
+  --surface-muted: #f1efe9;
+  --foreground: #2b2a27;
+  --muted-foreground: #736f66;
+  --border-color: #e6e2d9;
+  --accent: #c96442;
+  --accent-hover: #b5563a;
+  --accent-foreground: #fffaf7;
+  --success: #3f7a4e;
+  --success-bg: #e8f1e8;
+  --danger: #a83b2b;
+  --danger-bg: #fbebe7;
+  --radius-card: 0.9rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #1d1c19;
+    --surface: #26251f;
+    --surface-muted: #2e2c26;
+    --foreground: #eeeae2;
+    --muted-foreground: #a49e90;
+    --border-color: #3c3930;
+    --accent: #e0835f;
+    --accent-hover: #e79572;
+    --accent-foreground: #241b16;
+    --success: #7fc491;
+    --success-bg: #223229;
+    --danger: #e0897a;
+    --danger-bg: #3a2521;
+  }
+}
+
+:root[data-theme="dark"] {
+  --background: #1d1c19;
+  --surface: #26251f;
+  --surface-muted: #2e2c26;
+  --foreground: #eeeae2;
+  --muted-foreground: #a49e90;
+  --border-color: #3c3930;
+  --accent: #e0835f;
+  --accent-hover: #e79572;
+  --accent-foreground: #241b16;
+  --success: #7fc491;
+  --success-bg: #223229;
+  --danger: #e0897a;
+  --danger-bg: #3a2521;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border-color);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --font-sans: var(--font-inter);
+  --radius-card: var(--radius-card);
+}
+
+* {
+  border-color: var(--border-color);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}

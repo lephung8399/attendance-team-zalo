@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app.common.enums import AssignedBy, SessionStatus
@@ -210,7 +211,13 @@ def move_player(db: Session, session_id: str, participant_id: str, target_team_i
         db.add(TeamMember(team_id=target_team_id, participant_id=participant_id, assigned_by=AssignedBy.ADMIN))
         participant.is_substitute = False
         affected_teams.append(target_team)
-    db.flush()
+    try:
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        raise ValidationFailedError(
+            "Người này vừa được cập nhật bởi thao tác khác. Vui lòng tải lại và thử lại."
+        )
 
     for team in affected_teams:
         _recompute_strength(db, team)
@@ -241,24 +248,33 @@ def swap_players(db: Session, session_id: str, participant_id_a: str, participan
     team_a_id = tm_a.team_id if tm_a else None
     team_b_id = tm_b.team_id if tm_b else None
 
-    if tm_a is not None:
-        db.delete(tm_a)
-    if tm_b is not None:
-        db.delete(tm_b)
-    db.flush()
+    try:
+        if tm_a is not None:
+            db.delete(tm_a)
+        if tm_b is not None:
+            db.delete(tm_b)
+        db.flush()
 
-    if team_b_id is not None:
-        db.add(TeamMember(team_id=team_b_id, participant_id=participant_id_a, assigned_by=AssignedBy.ADMIN))
-        pa.is_substitute = False
-    else:
-        pa.is_substitute = True
+        if team_b_id is not None:
+            db.add(TeamMember(team_id=team_b_id, participant_id=participant_id_a, assigned_by=AssignedBy.ADMIN))
+            pa.is_substitute = False
+        else:
+            pa.is_substitute = True
 
-    if team_a_id is not None:
-        db.add(TeamMember(team_id=team_a_id, participant_id=participant_id_b, assigned_by=AssignedBy.ADMIN))
-        pb.is_substitute = False
-    else:
-        pb.is_substitute = True
-    db.flush()
+        if team_a_id is not None:
+            db.add(TeamMember(team_id=team_a_id, participant_id=participant_id_b, assigned_by=AssignedBy.ADMIN))
+            pb.is_substitute = False
+        else:
+            pb.is_substitute = True
+        db.flush()
+    except IntegrityError:
+        # A concurrent request (double-submit, or another Admin) already moved
+        # one of these two participants — surface a clean 400 instead of 500
+        # rather than leaving a half-applied swap.
+        db.rollback()
+        raise ValidationFailedError(
+            "Một trong hai người vừa được cập nhật bởi thao tác khác. Vui lòng tải lại và thử lại."
+        )
 
     for team_id in {team_a_id, team_b_id} - {None}:
         team = db.get(Team, team_id)
