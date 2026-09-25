@@ -29,3 +29,6 @@ out/
 # IDE
 .vscode/
 .idea/
+
+# Backend local
+backend/attendance.db
